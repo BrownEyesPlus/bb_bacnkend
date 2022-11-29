@@ -1,5 +1,5 @@
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
-from .models import Type, Blog, Category, User
+from .models import *
 
 
 class TypeSerializer(ModelSerializer):
@@ -50,3 +50,10 @@ class UserSerializer(ModelSerializer):
         user.save()
 
         return user
+
+
+class BaseProductSerializer(ModelSerializer):
+    class Meta:
+        model = BaseProduct
+        fields = "__all__"
+        depth = 2
