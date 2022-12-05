@@ -30,9 +30,14 @@ class MyModelBase(models.Model):
 
 
 class User(AbstractUser):
+    MEN, WOMEN = range(2)
+    GENDER = [
+        (MEN, 'man'),
+        (WOMEN, 'women')
+    ]
     avatar = models.ImageField(upload_to='upload/%Y/%m', null=True)
     phone = models.CharField(max_length=20, null=True)
-    gender = models.BooleanField(null=True)
+    gender = models.BooleanField(choices=GENDER, default=MEN,  null=True)
     address1 = models.CharField(max_length=1024, null=True)
     birth_year = models.DateField(null=True)
 
@@ -166,9 +171,69 @@ class Product(TimeStamp):
         Size, on_delete=models.CASCADE, related_name="product")
     quantity = models.IntegerField(null=False)
     price = models.IntegerField(null=True)
+    testing = models.CharField(max_length=255, null=True,)
 
     def __str__(self):
         return self.product_color.base_product.name + ' - ' + self.product_color.color.name + ' - ' + self.size.name
 
     class Meta:
         unique_together = ('size', 'product_color')
+
+
+class Input(TimeStamp):
+    user = models.ForeignKey(
+        User, on_delete=models.SET_NULL, related_name="input", null=True)
+    active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return (self.created_date.strftime('%Y-%m-%d %H:%M'))
+
+
+class InputDetail(models.Model):
+    input = models.ForeignKey(
+        Input, on_delete=models.CASCADE, related_name="input_detail")
+    product = models.ForeignKey(
+        Product, on_delete=models.SET_NULL, related_name="input_detail", null=True)
+    quantity = models.IntegerField(null=False)
+    price = models.IntegerField(null=True)
+
+    def __str__(self):
+        return self.input.created_date.strftime('%Y-%m-%d %H:%M') + ' - ' + self.product.product_color.base_product.name + ' - ' + self.product.size.name
+
+    class Meta:
+        unique_together = ('input', 'product')
+
+
+class Order(TimeStamp):
+    INIT, WAITING, TRANSPORTING, RECEIVED, CANCEL = range(5)
+    STATUS = [
+        (INIT, 'init'),
+        (WAITING, 'waiting'),
+        (TRANSPORTING, 'transporting'),
+        (RECEIVED, 'received'),
+        (CANCEL, 'cancel')
+    ]
+    user = models.ForeignKey(
+        User, on_delete=models.SET_NULL, related_name="order", null=True)
+    discount = models.ForeignKey(
+        Discount, on_delete=models.SET_NULL, related_name="order", null=True)
+    status = models.PositiveSmallIntegerField(choices=STATUS, default=INIT)
+    active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.created_date.strftime('%Y-%m-%d %H:%M')
+
+
+class OrderDetail(models.Model):
+    order = models.ForeignKey(
+        Order, on_delete=models.CASCADE, related_name="order_detail")
+    product = models.ForeignKey(
+        Product, on_delete=models.SET_NULL, related_name="order_detail", null=True)
+    quantity = models.IntegerField(null=False)
+    price = models.IntegerField(null=True)
+
+    def __str__(self):
+        return self.order.created_date.strftime('%Y-%m-%d %H:%M') + ' - ' + self.product.product_color.base_product.name + ' - ' + self.product.size.name
+
+    class Meta:
+        unique_together = ('order', 'product')
