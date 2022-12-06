@@ -1,5 +1,5 @@
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
-from .models import Type, Blog, Category, User
+from .models import *
 
 
 class TypeSerializer(ModelSerializer):
@@ -50,3 +50,74 @@ class UserSerializer(ModelSerializer):
         user.save()
 
         return user
+
+
+
+class ProductSerializer(ModelSerializer):
+    # image2 = SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = "__all__"
+        # depth = 2
+
+    # def get_image2(self, base_product):
+    #     request = self.context['request']
+    #     name = base_product.image.name
+    #     if name.startswith("statics/"):
+    #         path = '/%s' % name
+    #     else:
+    #         path = '/static/%s' % name
+
+    #     return request.build_absolute_uri(path)
+
+
+class ProductColorSerializer(ModelSerializer):
+    image = SerializerMethodField()
+    product = ProductSerializer
+
+    class Meta:
+        model = ProductColor
+        fields = ["id", "image", "color", "product"]
+        depth=1
+
+    def get_image(self, base_product):
+        request = self.context['request']
+        name = base_product.image.name
+        if name.startswith("statics/"):
+            path = '/%s' % name
+        else:
+            path = '/static/%s' % name
+
+        return request.build_absolute_uri(path)
+
+
+class BaseProductSerializer(ModelSerializer):
+    image = SerializerMethodField()
+    product_colors = ProductColorSerializer
+
+    class Meta:
+        model = BaseProduct
+        fields = [
+            "id",
+            "image",
+            "name",
+            "code_name",
+            "description",
+            # "category",
+            "discount",
+            "materials",
+            "product_colors",
+            "price",
+        ]
+        depth = 1
+
+    def get_image(self, base_product):
+        request = self.context['request']
+        name = base_product.image.name
+        if name.startswith("statics/"):
+            path = '/%s' % name
+        else:
+            path = '/static/%s' % name
+
+        return request.build_absolute_uri(path)
