@@ -91,3 +91,61 @@ class ProductViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAP
         products = Product.objects.all().order_by('-id')
 
         return products
+
+
+class OrdersViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView, generics.CreateAPIView, generics.UpdateAPIView):
+    queryset = Order.objects.all()
+    pagination_class = BasePagination
+    serializer_class = OrdersSerializer
+    ordering_fields = ['-id']
+    parser_classes = [MultiPartParser, JSONParser]
+
+    # def retrieve(self, request, pk):
+    #     order_detail = OrderDetail.objects.filter(order__id=pk)
+    #     serializer = OrderDetailSerializer(
+    #         instance=order_detail, many=True, context={'request': request}
+    #     )
+
+    #     print(request)
+    #     return Response(serializer.data)
+    # return Response(OrdersSerializer(order_detail, many=True, context={'request': request}).data)
+
+    def create(self, request):
+        products = request.data.get('items')
+        address1 = request.data.get('address1')
+        user = request.user
+        if (request.user.is_anonymous):
+            newOrder = Order.objects.create(
+                address1=address1
+            )
+        else:
+            newOrder = Order.objects.create(
+                user=user,
+                address1=address1
+            )
+
+        print(request.user.is_anonymous)
+
+        for product_param in products:
+            if (product_param['id']):
+                product = Product.objects.get(pk=product_param['id'])
+                if (product):
+                    OrderDetail.objects.create(
+                        product=product,
+                        quantity=product_param['quantity'],
+                        order=newOrder
+                    )
+
+        return Response({"success": "OK!"}, status=status.HTTP_200_OK)
+
+    #     action = request.data.get('action')
+    #     if action == 'delete':
+    #         prod = Mylikes.objects.filter(
+    #             ebook_id=ebook_id, user=request.user
+    #         ).first()
+    #         if favorite:
+    #             favorite.delete()
+    #     elif action == 'add':
+    #         Mylikes.objects.get_or_create(ebook_id=ebook_id, user=request.user)
+
+    #     return Response()

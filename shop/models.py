@@ -171,7 +171,6 @@ class Product(TimeStamp):
         Size, on_delete=models.CASCADE, related_name="product")
     quantity = models.IntegerField(null=False)
     price = models.IntegerField(null=True)
-    testing = models.CharField(max_length=255, null=True,)
 
     def __str__(self):
         return self.product_color.base_product.name + ' - ' + self.product_color.color.name + ' - ' + self.size.name
@@ -219,6 +218,7 @@ class Order(TimeStamp):
         Discount, on_delete=models.SET_NULL, related_name="order", null=True)
     status = models.PositiveSmallIntegerField(choices=STATUS, default=INIT)
     active = models.BooleanField(default=True)
+    address1 = models.CharField(max_length=500, null=False, default='')
 
     def __str__(self):
         return self.created_date.strftime('%Y-%m-%d %H:%M')

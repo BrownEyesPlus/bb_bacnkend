@@ -52,7 +52,6 @@ class UserSerializer(ModelSerializer):
         return user
 
 
-
 class ProductSerializer(ModelSerializer):
     # image2 = SerializerMethodField()
 
@@ -79,7 +78,7 @@ class ProductColorSerializer(ModelSerializer):
     class Meta:
         model = ProductColor
         fields = ["id", "image", "color", "product"]
-        depth=1
+        depth = 1
 
     def get_image(self, base_product):
         request = self.context['request']
@@ -121,3 +120,16 @@ class BaseProductSerializer(ModelSerializer):
             path = '/static/%s' % name
 
         return request.build_absolute_uri(path)
+
+
+class OrderDetailSerializer(ModelSerializer):
+    class Meta:
+        model = OrderDetail
+        fields = "__all__"
+
+
+class OrdersSerializer(ModelSerializer):
+    class Meta:
+        model = Order
+        fields = "__all__"
+        # depth = 1
