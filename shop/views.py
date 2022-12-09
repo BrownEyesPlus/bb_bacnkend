@@ -100,15 +100,20 @@ class OrdersViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPI
     ordering_fields = ['-id']
     parser_classes = [MultiPartParser, JSONParser]
 
-    # def retrieve(self, request, pk):
-    #     order_detail = OrderDetail.objects.filter(order__id=pk)
-    #     serializer = OrderDetailSerializer(
-    #         instance=order_detail, many=True, context={'request': request}
-    #     )
+    def get_queryset(self):
+        orders = OrderDetail.objects.all().order_by('-id')
 
-    #     print(request)
-    #     return Response(serializer.data)
-    # return Response(OrdersSerializer(order_detail, many=True, context={'request': request}).data)
+        return orders
+
+    def retrieve(self, request, pk):
+        order_detail = OrderDetail.objects.filter(order__id=pk)
+        serializer = OrderDetailSerializer(
+            instance=order_detail, many=True, context={'request': request}
+        )
+
+        print(request)
+        return Response(serializer.data)
+        # return Response(OrdersSerializer(order_detail, many=True, context={'request': request}).data)
 
     def create(self, request):
         products = request.data.get('items')
@@ -127,7 +132,7 @@ class OrdersViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPI
         print(request.user.is_anonymous)
 
         for product_param in products:
-            if (product_param['id']):
+            # if (product_param['id']):
                 product = Product.objects.get(pk=product_param['id'])
                 if (product):
                     OrderDetail.objects.create(

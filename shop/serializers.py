@@ -126,6 +126,7 @@ class OrderDetailSerializer(ModelSerializer):
     class Meta:
         model = OrderDetail
         fields = "__all__"
+        depth = 2
 
 
 class OrdersSerializer(ModelSerializer):
