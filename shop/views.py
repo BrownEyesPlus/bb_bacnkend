@@ -31,6 +31,16 @@ class TypeViewSet(viewsets.ViewSet, generics.ListAPIView):
     serializer_class = TypeSerializer
 
 
+class ColorViewSet(viewsets.ViewSet, generics.ListAPIView):
+    queryset = Color.objects.all()
+    serializer_class = ColorSerializer
+
+
+class SizeViewSet(viewsets.ViewSet, generics.ListAPIView):
+    queryset = Size.objects.all()
+    serializer_class = SizeSerializer
+
+
 class BlogViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
     serializer_class = BlogSerializer
     pagination_class = BasePagination
@@ -100,14 +110,20 @@ class OrdersViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPI
     ordering_fields = ['-id']
     parser_classes = [MultiPartParser, JSONParser]
 
-    # def retrieve(self, request, pk):
-    #     order_detail = OrderDetail.objects.filter(order__id=pk)
-    #     serializer = OrderDetailSerializer(
-    #         instance=order_detail, many=True, context={'request': request}
-    #     )
+    def get_queryset(self):
+        orders = Order.objects.all().order_by('-id')
 
-    #     print(request)
-    #     return Response(serializer.data)
+        return orders
+
+    def retrieve(self, request, pk):
+        order = Order.objects.get(pk=pk)
+        order_detail = OrderDetail.objects.filter(order=pk)
+        serializer = OrderDetailSerializer(
+            instance=order_detail, many=True, context={'request': request}
+        )
+
+        print(order)
+        return Response(serializer.data)
     # return Response(OrdersSerializer(order_detail, many=True, context={'request': request}).data)
 
     def create(self, request):
@@ -129,15 +145,28 @@ class OrdersViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPI
         for product_param in products:
             if (product_param['id']):
                 product = Product.objects.get(pk=product_param['id'])
-                if (product):
+                # BaseProduct.objects.get(pk=product)
+                if (product, product.quantity > 0):
                     OrderDetail.objects.create(
                         product=product,
                         quantity=product_param['quantity'],
-                        order=newOrder
+                        order=newOrder,
+                        # price=product.price
                     )
+                    product.quantity -= product_param['quantity']
+                    product.save()
 
         return Response({"success": "OK!"}, status=status.HTTP_200_OK)
 
+    @action(methods=['get'], detail=False, url_path='user')
+    def get_orders_user(self, request):
+
+        userId = self.request.user.id
+        order = Order.objects.filter(user__id=userId).order_by('-created_date')
+
+        return Response((OrdersSerializer(order, many=True, context={'request': request}, ).data))
+
+        # return Response(ProductColorSerializer(product_colors, many=True, context={'request': request}).data)
     #     action = request.data.get('action')
     #     if action == 'delete':
     #         prod = Mylikes.objects.filter(
@@ -148,4 +177,82 @@ class OrdersViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPI
     #     elif action == 'add':
     #         Mylikes.objects.get_or_create(ebook_id=ebook_id, user=request.user)
 
-    #     return Response()
+
+class InputViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView, generics.CreateAPIView):
+    queryset = Input.objects.all()
+    pagination_class = BasePagination
+    serializer_class = InputSerializer
+    ordering_fields = ['-id']
+    parser_classes = [MultiPartParser, JSONParser]
+
+    def get_queryset(self):
+        inputs = Input.objects.all().order_by('-id')
+
+        return inputs
+
+    def retrieve(self, request, pk):
+        # order = Input.objects.get(pk=pk)
+        input_detail = InputDetail.objects.filter(input=pk)
+        serializer = InputDetailSerializer(
+            instance=input_detail, many=True, context={'request': request}
+        )
+
+        # print(order)
+        return Response(serializer.data)
+    # return Response(OrdersSerializer(order_detail, many=True, context={'request': request}).data)
+
+    def create(self, request):
+        products = request.data
+        # product_color = request.data.get('product_color')
+        # size = request.data.get('size')
+        user = request.user
+        if (len(request.data) > 0):
+            if (request.user.is_anonymous):
+                newInput = Input.objects.create()
+            else:
+                newInput = Input.objects.create(
+                    user=user,
+                )
+
+            for product_param in products:
+                if (product_param['size']):
+                    product_color = ProductColor.objects.filter(
+                        id=product_param['product_color']).first()
+                    size = Size.objects.filter(
+                        id=product_param['size']).first()
+                    product = Product.objects.filter(
+                        size=product_param['size'], product_color=product_param['product_color']).first()
+                    print(product)
+                    if (product):
+                        InputDetail.objects.create(
+                            input=newInput,
+                            product=product,
+                            quantity=product_param['quantity'],
+                            price=product_param['price'],
+                        )
+                        product.quantity += product_param['quantity']
+                        product.save()
+                    else:
+                        newProduct = Product.objects.create(
+                            product_color=product_color,
+                            size=size,
+                            quantity=product_param['quantity']
+                        )
+                        InputDetail.objects.create(
+                            input=newInput,
+                            product=newProduct,
+                            quantity=product_param['quantity'],
+                            price=product_param['price'],
+                        )
+
+        print(len(request.data) > 0)
+
+        return Response({"success": "OK!"}, status=status.HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='user')
+    def get_orders_user(self, request):
+
+        userId = self.request.user.id
+        order = Order.objects.filter(user__id=userId).order_by('-created_date')
+
+        return Response((OrdersSerializer(order, many=True, context={'request': request}, ).data))
