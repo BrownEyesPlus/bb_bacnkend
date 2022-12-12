@@ -199,8 +199,8 @@ class InputDetail(models.Model):
     def __str__(self):
         return self.input.created_date.strftime('%Y-%m-%d %H:%M') + ' - ' + self.product.product_color.base_product.name + ' - ' + self.product.size.name
 
-    class Meta:
-        unique_together = ('input', 'product')
+    # class Meta:
+    #     unique_together = ('input', 'product')
 
 
 class Order(TimeStamp):

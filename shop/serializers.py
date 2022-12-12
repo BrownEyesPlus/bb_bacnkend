@@ -8,6 +8,18 @@ class TypeSerializer(ModelSerializer):
         fields = "__all__"
 
 
+class ColorSerializer(ModelSerializer):
+    class Meta:
+        model = Color
+        fields = "__all__"
+
+
+class SizeSerializer(ModelSerializer):
+    class Meta:
+        model = Size
+        fields = "__all__"
+
+
 class CategorySerializer(ModelSerializer):
     class Meta:
         model = Category
@@ -109,7 +121,7 @@ class BaseProductSerializer(ModelSerializer):
             "product_colors",
             "price",
         ]
-        depth = 1
+        depth = 2
 
     def get_image(self, base_product):
         request = self.context['request']
@@ -126,10 +138,71 @@ class OrderDetailSerializer(ModelSerializer):
     class Meta:
         model = OrderDetail
         fields = "__all__"
+        depth = 2
 
 
 class OrdersSerializer(ModelSerializer):
+    total_price = SerializerMethodField()
+    client = SerializerMethodField()
+
     class Meta:
         model = Order
         fields = "__all__"
         # depth = 1
+
+    def get_total_price(self, obj):
+        # result = list()
+
+        # for item in obj.items:
+        #     new_item = dict()
+        #     new_item['quantity'] = item['quantity']
+        #     # new_item['variant_id'] = item['variant_id']
+        #     new_item['product'] = ProductSerializer(
+        #         Product.objects.get(pk=item['item_id'])
+        #     ).data
+
+        #     result.append(new_item)
+
+        total_price = 0
+        detail_orders = OrderDetail.objects.filter(order__id=obj.id)
+        for detail in detail_orders:
+            product = Product.objects.get(pk=detail.product.id)
+            total_price += detail.quantity * product.product_color.base_product.price
+
+        return total_price
+
+    def get_client(self, obj):
+        user = User.objects.get(pk=2)
+
+        return UserSerializer(user).data
+
+class InputDetailSerializer(ModelSerializer):
+    class Meta:
+        model = InputDetail
+        fields = "__all__"
+        depth = 2
+
+
+class InputSerializer(ModelSerializer):
+    # total_price = SerializerMethodField()
+    # client = SerializerMethodField()
+
+    class Meta:
+        model = Input
+        fields = "__all__"
+        # depth = 1
+
+    # def get_total_price(self, obj):
+
+    #     total_price = 0
+    #     detail_orders = OrderDetail.objects.filter(order__id=obj.id)
+    #     for detail in detail_orders:
+    #         product = Product.objects.get(pk=detail.product.id)
+    #         total_price += detail.quantity * product.product_color.base_product.price
+
+    #     return total_price
+
+    # def get_client(self, obj):
+    #     user = User.objects.get(pk=2)
+
+    #     return UserSerializer(user).data
