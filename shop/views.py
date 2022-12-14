@@ -59,10 +59,11 @@ class BlogViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIVi
         return blogs
 
 
-class BaseProductViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
+class BaseProductViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView, generics.CreateAPIView, generics.UpdateAPIView):
     queryset = BaseProduct.objects.all()
     pagination_class = BasePagination
     serializer_class = BaseProductSerializer
+    parser_classes = [MultiPartParser, JSONParser]
     ordering_fields = ['-id']
 
     def get_queryset(self):
@@ -78,8 +79,57 @@ class BaseProductViewSet(viewsets.ViewSet, generics.ListAPIView, generics.Retrie
 
         return Response(ProductColorSerializer(product_colors, many=True, context={'request': request}).data)
 
+    def create(self, request):
+        name = request.data.get('name')
+        image = request.data.get('image')
+        code_name = request.data.get('code_name')
+        price = request.data.get('price')
+        description = request.data.get('description')
+        discount_id = request.data.get('discount')
+        discount = Discount.objects.filter(id=discount_id).first()
+        color_id = request.data.get('color')
+        color = Color.objects.filter(id=color_id).first()
+        category_id = request.data.get('category')
+        category = Category.objects.filter(id=category_id).first()
+        type_id = request.data.get('type')
+        type = Type.objects.filter(id=type_id).first()
 
-class ProductColorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
+        base_product = BaseProduct.objects.create(
+            name=name,
+            image=image,
+            discount=discount,
+            code_name=code_name,
+            price=price,
+            description=description,
+            # color=color,
+            category=category,
+            type=type
+        )
+
+        if (base_product):
+            ProductColor.objects.create(
+                base_product=base_product,
+                color=color,
+                image=image
+            )
+
+        print(base_product)
+
+        # user = request.user
+        # if (request.user.is_anonymous):
+        #     newOrder = Order.objects.create(
+        #         address1=address1
+        #     )
+        # else:
+        #     newOrder = Order.objects.create(
+        #         user=user,
+        #         address1=address1
+        #     )
+
+        return Response({"success": "OK!"}, status=status.HTTP_200_OK)
+
+
+class ProductColorViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView, generics.CreateAPIView, generics.UpdateAPIView):
     queryset = ProductColor.objects.all()
     pagination_class = BasePagination
     serializer_class = ProductColorSerializer
